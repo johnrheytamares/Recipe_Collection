@@ -1,0 +1,7 @@
+{
+  "name": "Recipe_Collection",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue-vite"
+}
