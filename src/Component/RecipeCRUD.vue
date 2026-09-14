@@ -1,277 +1,162 @@
 <template>
     <div class="recipe-container">
-
-        <!-- ==========================
-         ADD / EDIT RECIPE
-    =========================== -->
-        <ion-card class="form-card">
-
-            <ion-card-header>
-                <div class="form-header">
-
-                    <div class="form-icon">
-                        <ion-icon :icon="editingId ? createOutline : addOutline" />
-                    </div>
-
-                    <div>
-                        <ion-card-subtitle>
-                            {{ editingId ? 'UPDATE RECIPE' : 'NEW RECIPE' }}
-                        </ion-card-subtitle>
-
-                        <ion-card-title>
-                            {{ editingId ? 'Edit Recipe' : 'Add a Recipe' }}
-                        </ion-card-title>
-                    </div>
-
-                </div>
-            </ion-card-header>
-
-            <ion-card-content>
-
-                <!-- Recipe Name -->
-                <div class="form-field">
-                    <label>Recipe Name</label>
-
-                    <ion-item lines="none">
-                        <ion-icon slot="start" :icon="restaurantOutline" />
-
-                        <ion-input v-model="recipe.recipeName" placeholder="Enter recipe name" />
-                    </ion-item>
-                </div>
-
-                <!-- Category -->
-                <div class="form-field">
-                    <label>Category</label>
-
-                    <ion-item lines="none">
-                        <ion-icon slot="start" :icon="gridOutline" />
-
-                        <ion-input v-model="recipe.category" placeholder="e.g. Main Dish, Dessert" />
-                    </ion-item>
-                </div>
-
-                <!-- Preparation Time -->
-                <div class="form-field">
-                    <label>Preparation Time</label>
-
-                    <ion-item lines="none">
-                        <ion-icon slot="start" :icon="timeOutline" />
-
-                        <ion-input v-model="recipe.preparationTime" placeholder="e.g. 30 minutes" />
-                    </ion-item>
-                </div>
-
-                <!-- Ingredients -->
-                <div class="form-field">
-                    <label>Ingredients</label>
-
-                    <ion-item lines="none">
-                        <ion-icon slot="start" :icon="listOutline" />
-
-                        <ion-textarea v-model="recipe.ingredients" placeholder="List the ingredients needed..."
-                            :auto-grow="true" />
-                    </ion-item>
-                </div>
-
-                <!-- Instructions -->
-                <div class="form-field">
-                    <label>Instructions</label>
-
-                    <ion-item lines="none">
-                        <ion-icon slot="start" :icon="documentTextOutline" />
-
-                        <ion-textarea v-model="recipe.instructions" placeholder="Write the cooking instructions..."
-                            :auto-grow="true" />
-                    </ion-item>
-                </div>
-
-                <!-- Buttons -->
-                <div class="form-buttons">
-
-                    <ion-button class="primary-button" expand="block" @click="saveRecipe">
-                        <ion-icon slot="start" :icon="editingId ? saveOutline : addOutline" />
-
-                        {{ editingId ? 'Update Recipe' : 'Add Recipe' }}
-                    </ion-button>
-
-                    <ion-button v-if="editingId" class="cancel-button" expand="block" fill="outline"
-                        @click="cancelEdit">
-                        Cancel
-                    </ion-button>
-
-                </div>
-
-            </ion-card-content>
-        </ion-card>
-
-
-        <!-- ==========================
-         RECIPE COLLECTION
-    =========================== -->
-
         <div class="collection-header">
-
-            <div>
-                <span class="collection-label">RECIPES</span>
+            <div><span class="collection-label">RECIPES</span>
                 <h2>Your Collection</h2>
             </div>
-
-            <div class="recipe-count">
-                {{ recipes.length }}
-                {{ recipes.length === 1 ? 'Recipe' : 'Recipes' }}
-            </div>
-
+            <button class="add-button" type="button" aria-label="Add recipe" @click="openAddSheet"><ion-icon
+                    :icon="addOutline" /></button>
         </div>
 
-
-        <!-- Empty State -->
-        <div v-if="recipes.length === 0" class="empty-state">
-            <div class="empty-icon">
-                <ion-icon :icon="restaurantOutline" />
-            </div>
-
-            <h3>No Recipes Yet</h3>
-
-            <p>
-                Start building your recipe collection by
-                adding your first recipe above.
-            </p>
+        <div class="search-box">
+            <ion-icon :icon="searchOutline" /><input v-model="searchQuery" type="text"
+                placeholder="Search recipes..." />
         </div>
 
-
-        <!-- ==========================
-         RECIPE CARDS
-    =========================== -->
-
-        <div v-else class="recipe-grid">
-
-            <ion-card v-for="item in recipes" :key="item.id" class="recipe-card">
-
-                <!-- Card Top -->
-                <div class="recipe-card-top">
-
-                    <div class="category-badge">
-                        {{ item.category }}
-                    </div>
-
-                    <div class="time-badge">
-                        <ion-icon :icon="timeOutline" />
-                        {{ item.preparationTime }}
-                    </div>
-
+        <div v-if="filteredRecipes.length" class="recipe-grid">
+            <article v-for="item in filteredRecipes" :key="item.id" class="recipe-card" @click="openDetails(item)">
+                <div v-if="item.imageBase64" class="recipe-image"><img :src="item.imageBase64" :alt="item.recipeName" />
                 </div>
-
-
-                <!-- Recipe Title -->
-                <ion-card-header class="recipe-header">
-
-                    <ion-card-title>
-                        {{ item.recipeName }}
-                    </ion-card-title>
-
-                </ion-card-header>
-
-
-                <!-- Recipe Information -->
-                <ion-card-content>
-
-                    <!-- Ingredients -->
-                    <div class="recipe-section">
-
-                        <div class="recipe-section-title">
-                            <ion-icon :icon="listOutline" />
-                            <span>Ingredients</span>
-                        </div>
-
-                        <p>
-                            {{ item.ingredients }}
-                        </p>
-
-                    </div>
-
-
-                    <!-- Instructions -->
-                    <div class="recipe-section">
-
-                        <div class="recipe-section-title">
-                            <ion-icon :icon="documentTextOutline" />
-                            <span>Instructions</span>
-                        </div>
-
-                        <p>
-                            {{ item.instructions }}
-                        </p>
-
-                    </div>
-
-
-                    <!-- Actions -->
-                    <div class="recipe-actions">
-
-                        <ion-button class="edit-button" fill="outline" @click="editRecipe(item)">
-                            <ion-icon slot="start" :icon="createOutline" />
-
-                            Edit
-                        </ion-button>
-
-                        <ion-button class="delete-button" fill="outline" @click="deleteRecipe(item.id)">
-                            <ion-icon slot="start" :icon="trashOutline" />
-
-                            Delete
-                        </ion-button>
-
-                    </div>
-
-                </ion-card-content>
-
-            </ion-card>
-
+                <div v-else class="recipe-image recipe-image-placeholder"><ion-icon :icon="restaurantOutline" /></div>
+                <div class="recipe-card-body">
+                    <div class="card-top"><span class="category-tag">{{ item.category }}</span><span
+                            class="time-note"><ion-icon :icon="timeOutline" />{{ item.preparationTime }}</span></div>
+                    <h3>{{ item.recipeName }}</h3>
+                    <p class="preview">{{ firstLine(item.ingredients) }}</p>
+                    <div class="view-row"><span>View Recipe</span><ion-icon :icon="chevronForwardOutline" /></div>
+                </div>
+            </article>
         </div>
 
+        <div v-else class="empty-state">
+            <div class="empty-icon"><ion-icon :icon="restaurantOutline" /></div>
+            <h3>{{ searchQuery ? 'No matching recipes' : 'The box is empty' }}</h3>
+            <p>{{ searchQuery ? 'Try another recipe name or category.' : 'Tap + to add the first recipe.' }}</p>
+        </div>
+
+        <Teleport to="body">
+            <Transition name="sheet-fade">
+                <div v-if="sheetOpen" class="sheet-overlay" @click.self="closeSheet">
+                    <div class="bottom-sheet" role="dialog" aria-modal="true">
+                        <div class="sheet-handle"></div>
+
+                        <template v-if="sheetMode === 'add' || sheetMode === 'edit'">
+                            <div class="sheet-header">
+                                <div><span class="sheet-eyebrow">{{ sheetMode === 'edit' ? 'EDIT RECIPE' : 'NEW RECIPE'
+                                        }}</span>
+                                    <h2>{{ sheetMode === 'edit' ? 'Edit Recipe' : 'Add a Recipe' }}</h2>
+                                </div>
+                                <button class="close-button" type="button" aria-label="Close"
+                                    @click="closeSheet"><ion-icon :icon="closeOutline" /></button>
+                            </div>
+
+                            <form class="recipe-form" @submit.prevent="saveRecipe">
+                                <div class="image-upload">
+                                    <div v-if="recipe.imageBase64" class="image-preview">
+                                        <img :src="recipe.imageBase64" alt="Recipe preview" />
+                                        <button type="button" class="remove-image" aria-label="Remove image"
+                                            @click="removeImage"><ion-icon :icon="closeOutline" /></button>
+                                    </div>
+                                    <label v-else class="upload-box">
+                                        <input ref="imageInput" type="file" accept="image/*"
+                                            @change="handleImageUpload" />
+                                        <ion-icon :icon="cameraOutline" /><strong>Add Recipe Image</strong><span>JPG,
+                                            PNG or WEBP</span>
+                                    </label>
+                                </div>
+
+                                <div class="form-field"><label>Recipe name</label><ion-item lines="none"><ion-icon
+                                            slot="start" :icon="restaurantOutline" /><ion-input
+                                            v-model="recipe.recipeName" color="dark" placeholder="What are you cooking?"
+                                            required /></ion-item></div>
+                                <div class="form-row">
+                                    <div class="form-field"><label>Category</label><ion-item lines="none"><ion-icon
+                                                slot="start" :icon="gridOutline" /><ion-input v-model="recipe.category"
+                                                color="dark" placeholder="Main, dessert, soup..." required /></ion-item>
+                                    </div>
+                                    <div class="form-field"><label>Prep time</label><ion-item lines="none"><ion-icon
+                                                slot="start" :icon="timeOutline" /><ion-input
+                                                v-model="recipe.preparationTime" color="dark" placeholder="30 minutes"
+                                                required /></ion-item></div>
+                                </div>
+                                <div class="form-field"><label>Ingredients</label><ion-item lines="none"><ion-icon
+                                            slot="start" :icon="listOutline" /><ion-textarea
+                                            v-model="recipe.ingredients" color="dark"
+                                            placeholder="List ingredients, one per line..." :auto-grow="true"
+                                            required /></ion-item></div>
+                                <div class="form-field"><label>Instructions</label><ion-item lines="none"><ion-icon
+                                            slot="start" :icon="documentTextOutline" /><ion-textarea
+                                            v-model="recipe.instructions" color="dark"
+                                            placeholder="Write the cooking method..." :auto-grow="true"
+                                            required /></ion-item></div>
+                                <p v-if="errorMessage" class="form-error">{{ errorMessage }}</p>
+                                <button class="save-button" type="submit" :disabled="saving"><ion-icon
+                                        :icon="editingId ? saveOutline : addOutline" />{{ saving ? 'Saving...' :
+                                            editingId ? 'Update Recipe' : 'Save Recipe' }}</button>
+                            </form>
+                        </template>
+
+                        <template v-else-if="sheetMode === 'details' && selectedRecipe">
+                            <div class="sheet-header">
+                                <div><span class="sheet-eyebrow">RECIPE</span>
+                                    <h2>{{ selectedRecipe.recipeName }}</h2>
+                                </div>
+                                <button class="close-button" type="button" aria-label="Close"
+                                    @click="closeSheet"><ion-icon :icon="closeOutline" /></button>
+                            </div>
+                            <div class="detail-content">
+                                <div v-if="selectedRecipe.imageBase64" class="detail-image"><img
+                                        :src="selectedRecipe.imageBase64" :alt="selectedRecipe.recipeName" /></div>
+                                <div class="detail-meta"><span class="category-tag">{{ selectedRecipe.category
+                                        }}</span><span><ion-icon :icon="timeOutline" />{{ selectedRecipe.preparationTime
+                                        }}</span></div>
+                                <section class="detail-section">
+                                    <h3><ion-icon :icon="listOutline" />Ingredients</h3>
+                                    <p class="multiline">{{ selectedRecipe.ingredients }}</p>
+                                </section>
+                                <section class="detail-section">
+                                    <h3><ion-icon :icon="documentTextOutline" />Instructions</h3>
+                                    <p class="multiline">{{ selectedRecipe.instructions }}</p>
+                                </section>
+                                <p class="owner-note">{{ isOwner(selectedRecipe) ? 'You shared this recipe.' :
+                                    'Sharedby another recipe contributor.' }}</p>
+                                <div v-if="isOwner(selectedRecipe)" class="detail-actions">
+                                    <button class="edit-action" type="button"
+                                        @click="openEdit(selectedRecipe)"><ion-icon
+                                            :icon="createOutline" />Edit</button>
+                                    <button class="delete-action" type="button"
+                                        @click="openDelete(selectedRecipe)"><ion-icon
+                                            :icon="trashOutline" />Delete</button>
+                                </div>
+                            </div>
+                        </template>
+
+                        <template v-else-if="sheetMode === 'delete' && selectedRecipe">
+                            <div class="confirm-content">
+                                <div class="delete-icon"><ion-icon :icon="trashOutline" /></div>
+                                <h2>Delete this recipe?</h2>
+                                <p>This will permanently remove <strong>{{ selectedRecipe.recipeName }}</strong>.</p>
+                                <div class="confirm-actions"><button class="cancel-action" type="button"
+                                        @click="openDetails(selectedRecipe)">Cancel</button><button
+                                        class="delete-action" type="button" :disabled="saving" @click="confirmDelete">{{
+                                            saving ? 'Deleting...' : 'Delete' }}</button></div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
     </div>
 </template>
 
-
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-
-import {
-    IonCard,
-    IonCardContent,
-    IonCardHeader,
-    IonCardTitle,
-    IonCardSubtitle,
-    IonItem,
-    IonInput,
-    IonTextarea,
-    IonButton,
-    IonIcon
-} from '@ionic/vue'
-
-import {
-    restaurantOutline,
-    addOutline,
-    createOutline,
-    saveOutline,
-    trashOutline,
-    timeOutline,
-    listOutline,
-    documentTextOutline,
-    gridOutline
-} from 'ionicons/icons'
-
-import {
-    ref as firebaseRef,
-    push,
-    set,
-    get,
-    update,
-    remove
-} from 'firebase/database'
-
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { IonIcon, IonInput, IonItem, IonTextarea } from '@ionic/vue'
+import { addOutline, cameraOutline, chevronForwardOutline, closeOutline, createOutline, documentTextOutline, gridOutline, listOutline, restaurantOutline, saveOutline, searchOutline, timeOutline, trashOutline } from 'ionicons/icons'
+import { get, onValue, push, ref as firebaseRef, remove, set, update } from 'firebase/database'
 import { database } from '../firebase'
 
-
+// Defines the structure of a recipe and the data it can contain.
 interface Recipe {
     id: string
     recipeName: string
@@ -279,262 +164,371 @@ interface Recipe {
     ingredients: string
     instructions: string
     preparationTime: string
+    imageBase64?: string
+    createdBy?: string
+    createdAt?: number
+    updatedAt?: number
 }
 
+// Defines the different states of the recipe bottom sheet.
+type SheetMode =
+    | 'none'
+    | 'add'
+    | 'edit'
+    | 'details'
+    | 'delete'
 
+
+// Stores the recipe data, form state, selected recipe,
+// loading state, and other UI states used by the component.
 const recipes = ref<Recipe[]>([])
+const searchQuery = ref('')
+const sheetOpen = ref(false)
+const sheetMode = ref<SheetMode>('none')
+const selectedRecipe = ref<Recipe | null>(null)
+const editingId = ref<string | null>(null)
+const saving = ref(false)
+const errorMessage = ref('')
+const imageInput = ref<HTMLInputElement | null>(null)
 
+
+// Stores the values entered in the Add/Edit Recipe form.
 const recipe = ref({
     recipeName: '',
     category: '',
     ingredients: '',
     instructions: '',
-    preparationTime: ''
+    preparationTime: '',
+    imageBase64: ''
 })
 
-const editingId = ref<string | null>(null)
 
-const recipesReference = firebaseRef(
-    database,
-    'recipes'
-)
+// References the recipes location in Firebase Realtime Database.
+const recipesReference = firebaseRef(database, 'recipes')
+
+// Stores the Firebase realtime listener unsubscribe function.
+let unsubscribeRecipes: (() => void) | undefined
+
+// Creates or retrieves a local owner ID used to identify
+// recipes created from the current browser/device.
+const ownerKey = 'recipe_collection_owner_id'
+
+const getOwnerId = () => {
+    let id = localStorage.getItem(ownerKey)
+
+    if (!id) {
+        id = `owner_${crypto.randomUUID()}`
+        localStorage.setItem(ownerKey, id)
+    }
+
+    return id
+}
+
+const currentOwnerId = getOwnerId()
 
 
-/* =========================
-   LOAD RECIPES
-========================= */
+// Filters the recipe list based on the user's search query.
+const filteredRecipes = computed(() => {
+    const q = searchQuery.value.trim().toLowerCase()
 
+    if (!q) {
+        return recipes.value
+    }
+
+    return recipes.value.filter(
+        (x) =>
+            x.recipeName.toLowerCase().includes(q) ||
+            x.category.toLowerCase().includes(q)
+    )
+})
+
+
+// Converts raw Firebase recipe data into the format
+// expected by the application.
+const normalizeRecipe = (
+    id: string,
+    d: any
+): Recipe => ({
+    id,
+    recipeName: d?.recipeName || '',
+    category: d?.category || '',
+    ingredients: d?.ingredients || '',
+    instructions: d?.instructions || '',
+    preparationTime: d?.preparationTime || '',
+    imageBase64:
+        d?.imageBase64 ||
+        d?.imageUrl ||
+        '',
+    createdBy: d?.createdBy || '',
+    createdAt: Number(d?.createdAt || 0),
+    updatedAt: Number(d?.updatedAt || 0)
+})
+
+
+// Updates the local recipe list using the latest
+// data received from Firebase.
+const applySnapshot = (snapshot: any) => {
+    if (!snapshot.exists()) {
+        recipes.value = []
+        return
+    }
+
+    const data = snapshot.val()
+
+    recipes.value = Object.keys(data)
+        .map((id) =>
+            normalizeRecipe(id, data[id])
+        )
+        .sort(
+            (a, b) =>
+                (b.createdAt || 0) -
+                (a.createdAt || 0)
+        )
+}
+
+
+// Loads the current recipes from Firebase.
 const loadRecipes = async () => {
     try {
-
-        const snapshot = await get(
-            recipesReference
+        applySnapshot(
+            await get(recipesReference)
         )
-
-        const loadedRecipes: Recipe[] = []
-
-        if (snapshot.exists()) {
-
-            const data = snapshot.val()
-
-            Object.keys(data).forEach((id) => {
-
-                loadedRecipes.push({
-                    id,
-                    recipeName: data[id].recipeName || '',
-                    category: data[id].category || '',
-                    ingredients: data[id].ingredients || '',
-                    instructions: data[id].instructions || '',
-                    preparationTime:
-                        data[id].preparationTime || ''
-                })
-
-            })
-        }
-
-        recipes.value = loadedRecipes
-
-    } catch (error) {
-
-        console.error(
-            'Error loading recipes:',
-            error
-        )
-
+    } catch (e) {
+        console.error(e)
+        errorMessage.value =
+            'Unable to load recipes.'
     }
 }
 
 
-/* =========================
-   ADD RECIPE
-========================= */
+// Clears the recipe form and resets the editing state.
+const resetForm = () => {
+    recipe.value = {
+        recipeName: '',
+        category: '',
+        ingredients: '',
+        instructions: '',
+        preparationTime: '',
+        imageBase64: ''
+    }
 
-const addRecipe = async () => {
+    editingId.value = null
+    errorMessage.value = ''
 
-    try {
-
-        const newRecipeReference =
-            push(recipesReference)
-
-        await set(
-            newRecipeReference,
-            {
-                recipeName:
-                    recipe.value.recipeName,
-
-                category:
-                    recipe.value.category,
-
-                ingredients:
-                    recipe.value.ingredients,
-
-                instructions:
-                    recipe.value.instructions,
-
-                preparationTime:
-                    recipe.value.preparationTime
-            }
-        )
-
-        await loadRecipes()
-
-        clearForm()
-
-        console.log(
-            'Recipe added successfully.'
-        )
-
-    } catch (error) {
-
-        console.error(
-            'Error adding recipe:',
-            error
-        )
-
+    if (imageInput.value) {
+        imageInput.value.value = ''
     }
 }
 
 
-/* =========================
-   UPDATE RECIPE
-========================= */
-
-const updateRecipe = async () => {
-
-    if (!editingId.value) {
-        return
-    }
-
-    try {
-
-        const recipeReference =
-            firebaseRef(
-                database,
-                `recipes/${editingId.value}`
-            )
-
-        await update(
-            recipeReference,
-            {
-                recipeName:
-                    recipe.value.recipeName,
-
-                category:
-                    recipe.value.category,
-
-                ingredients:
-                    recipe.value.ingredients,
-
-                instructions:
-                    recipe.value.instructions,
-
-                preparationTime:
-                    recipe.value.preparationTime
-            }
-        )
-
-        await loadRecipes()
-
-        clearForm()
-
-        console.log(
-            'Recipe updated successfully.'
-        )
-
-    } catch (error) {
-
-        console.error(
-            'Error updating recipe:',
-            error
-        )
-
-    }
+// Opens the bottom sheet for creating a new recipe.
+const openAddSheet = () => {
+    resetForm()
+    selectedRecipe.value = null
+    sheetMode.value = 'add'
+    sheetOpen.value = true
 }
 
 
-/* =========================
-   DELETE RECIPE
-========================= */
+// Opens the bottom sheet and displays the selected recipe's details.
+const openDetails = (item: Recipe) => {
+    selectedRecipe.value = item
+    editingId.value = null
+    errorMessage.value = ''
+    sheetMode.value = 'details'
+    sheetOpen.value = true
+}
 
-const deleteRecipe = async (
-    id: string
-) => {
 
-    const confirmed = window.confirm(
-        'Are you sure you want to delete this recipe?'
+// Checks whether the selected recipe was created
+// by the current browser/device.
+const isOwner = (item: Recipe) => {
+    return Boolean(
+        item.createdBy &&
+        item.createdBy === currentOwnerId
     )
-
-    if (!confirmed) {
-        return
-    }
-
-    try {
-
-        const recipeReference =
-            firebaseRef(
-                database,
-                `recipes/${id}`
-            )
-
-        await remove(recipeReference)
-
-        await loadRecipes()
-
-        console.log(
-            'Recipe deleted successfully.'
-        )
-
-    } catch (error) {
-
-        console.error(
-            'Error deleting recipe:',
-            error
-        )
-
-    }
 }
 
 
-/* =========================
-   EDIT RECIPE
-========================= */
+// Opens the edit form for a recipe owned by the current user.
+const openEdit = (item: Recipe) => {
+    if (!isOwner(item)) {
+        return
+    }
 
-const editRecipe = (
-    item: Recipe
-) => {
-
+    selectedRecipe.value = item
     editingId.value = item.id
 
     recipe.value = {
-
-        recipeName:
-            item.recipeName,
-
-        category:
-            item.category,
-
-        ingredients:
-            item.ingredients,
-
-        instructions:
-            item.instructions,
-
-        preparationTime:
-            item.preparationTime
+        recipeName: item.recipeName,
+        category: item.category,
+        ingredients: item.ingredients,
+        instructions: item.instructions,
+        preparationTime: item.preparationTime,
+        imageBase64: item.imageBase64 || ''
     }
 
-    window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-    })
+    errorMessage.value = ''
+    sheetMode.value = 'edit'
+    sheetOpen.value = true
 }
 
 
-/* =========================
-   SAVE RECIPE
-========================= */
+// Opens the delete confirmation for a recipe
+// owned by the current user.
+const openDelete = (item: Recipe) => {
+    if (!isOwner(item)) {
+        return
+    }
 
+    selectedRecipe.value = item
+    sheetMode.value = 'delete'
+    sheetOpen.value = true
+}
+
+
+// Closes the bottom sheet and clears its current state.
+const closeSheet = () => {
+    sheetOpen.value = false
+    sheetMode.value = 'none'
+    selectedRecipe.value = null
+    editingId.value = null
+    errorMessage.value = ''
+}
+
+
+// Converts an uploaded image into a resized Base64 image
+// before it is stored in Firebase.
+const resizeImageToBase64 = (
+    file: File
+): Promise<string> =>
+    new Promise((resolve, reject) => {
+        const reader = new FileReader()
+
+        reader.onload = () => {
+            const image = new Image()
+
+            image.onload = () => {
+                const max = 1200
+                const scale = Math.min(
+                    1,
+                    max / Math.max(
+                        image.width,
+                        image.height
+                    )
+                )
+
+                const canvas =
+                    document.createElement('canvas')
+
+                canvas.width = Math.max(
+                    1,
+                    Math.round(image.width * scale)
+                )
+
+                canvas.height = Math.max(
+                    1,
+                    Math.round(image.height * scale)
+                )
+
+                const ctx = canvas.getContext('2d')
+
+                if (!ctx) {
+                    return reject(
+                        new Error(
+                            'Canvas is not supported.'
+                        )
+                    )
+                }
+
+                ctx.drawImage(
+                    image,
+                    0,
+                    0,
+                    canvas.width,
+                    canvas.height
+                )
+
+                resolve(
+                    canvas.toDataURL(
+                        'image/jpeg',
+                        0.78
+                    )
+                )
+            }
+
+            image.onerror = () =>
+                reject(
+                    new Error('Invalid image.')
+                )
+
+            image.src = String(reader.result)
+        }
+
+        reader.onerror = () =>
+            reject(
+                reader.error ||
+                new Error('File read failed.')
+            )
+
+        reader.readAsDataURL(file)
+    })
+
+
+// Validates the selected image, processes it,
+// and stores it as Base64 for the recipe.
+const handleImageUpload = async (
+    event: Event
+) => {
+    const input =
+        event.target as HTMLInputElement
+
+    const file = input.files?.[0]
+
+    if (!file) {
+        return
+    }
+
+    if (!file.type.startsWith('image/')) {
+        errorMessage.value =
+            'Please select an image file.'
+        return
+    }
+
+    if (file.size > 8 * 1024 * 1024) {
+        errorMessage.value =
+            'Image is too large. Please choose an image under 8 MB.'
+        return
+    }
+
+    try {
+        recipe.value.imageBase64 =
+            await resizeImageToBase64(file)
+
+        errorMessage.value = ''
+    } catch (e) {
+        console.error(e)
+
+        errorMessage.value =
+            'Unable to process the selected image.'
+    }
+}
+
+
+// Removes the selected image from the recipe form.
+const removeImage = () => {
+    recipe.value.imageBase64 = ''
+
+    if (imageInput.value) {
+        imageInput.value.value = ''
+    }
+}
+
+
+// Creates a new recipe or updates an existing recipe
+// in Firebase after validating the required fields.
 const saveRecipe = async () => {
+    errorMessage.value = ''
 
     if (
         !recipe.value.recipeName.trim() ||
@@ -543,617 +537,825 @@ const saveRecipe = async () => {
         !recipe.value.instructions.trim() ||
         !recipe.value.preparationTime.trim()
     ) {
-
-        alert(
-            'Please fill in all fields.'
-        )
+        errorMessage.value =
+            'Please fill in all required fields.'
 
         return
     }
 
-    if (editingId.value) {
+    saving.value = true
 
-        await updateRecipe()
+    try {
+        const now = Date.now()
 
-    } else {
+        if (editingId.value) {
+            const existing = recipes.value.find(
+                (x) => x.id === editingId.value
+            )
 
-        await addRecipe()
+            if (
+                !existing ||
+                !isOwner(existing)
+            ) {
+                throw new Error(
+                    'You can only edit recipes you created.'
+                )
+            }
 
+            await update(
+                firebaseRef(
+                    database,
+                    `recipes/${editingId.value}`
+                ),
+                {
+                    recipeName:
+                        recipe.value.recipeName.trim(),
+
+                    category:
+                        recipe.value.category.trim(),
+
+                    ingredients:
+                        recipe.value.ingredients.trim(),
+
+                    instructions:
+                        recipe.value.instructions.trim(),
+
+                    preparationTime:
+                        recipe.value.preparationTime.trim(),
+
+                    imageBase64:
+                        recipe.value.imageBase64 || '',
+
+                    updatedAt: now
+                }
+            )
+        } else {
+            const r = push(
+                recipesReference
+            )
+
+            await set(r, {
+                recipeName:
+                    recipe.value.recipeName.trim(),
+
+                category:
+                    recipe.value.category.trim(),
+
+                ingredients:
+                    recipe.value.ingredients.trim(),
+
+                instructions:
+                    recipe.value.instructions.trim(),
+
+                preparationTime:
+                    recipe.value.preparationTime.trim(),
+
+                imageBase64:
+                    recipe.value.imageBase64 || '',
+
+                createdBy: currentOwnerId,
+                createdAt: now,
+                updatedAt: now
+            })
+        }
+
+        closeSheet()
+    } catch (e) {
+        console.error(e)
+
+        errorMessage.value =
+            e instanceof Error
+                ? e.message
+                : 'Unable to save recipe.'
+    } finally {
+        saving.value = false
     }
 }
 
 
-/* =========================
-   CLEAR FORM
-========================= */
-
-const clearForm = () => {
-
-    recipe.value = {
-
-        recipeName: '',
-        category: '',
-        ingredients: '',
-        instructions: '',
-        preparationTime: ''
-
+// Deletes the selected recipe from Firebase
+// after confirming that the current user owns it.
+const confirmDelete = async () => {
+    if (
+        !selectedRecipe.value ||
+        !isOwner(selectedRecipe.value)
+    ) {
+        return
     }
 
-    editingId.value = null
+    saving.value = true
+
+    try {
+        await remove(
+            firebaseRef(
+                database,
+                `recipes/${selectedRecipe.value.id}`
+            )
+        )
+
+        closeSheet()
+    } catch (e) {
+        console.error(e)
+
+        errorMessage.value =
+            'Unable to delete this recipe.'
+    } finally {
+        saving.value = false
+    }
 }
 
 
-/* =========================
-   CANCEL EDIT
-========================= */
-
-const cancelEdit = () => {
-
-    clearForm()
-
+// Returns the first non-empty ingredient line
+// for displaying a short ingredient preview.
+const firstLine = (text: string) => {
+    return (
+        text
+            .split('\n')
+            .map((x) => x.trim())
+            .find(Boolean) ||
+        'No ingredients listed.'
+    )
 }
 
 
-/* =========================
-   LOAD ON PAGE START
-========================= */
+// Closes the bottom sheet when the Escape key is pressed.
+const handleEscape = (
+    e: KeyboardEvent
+) => {
+    if (
+        e.key === 'Escape' &&
+        sheetOpen.value
+    ) {
+        closeSheet()
+    }
+}
 
+
+// Loads recipes, starts realtime Firebase updates,
+// and registers the keyboard event when the component loads.
 onMounted(() => {
-
     loadRecipes()
 
+    unsubscribeRecipes = onValue(
+        recipesReference,
+        applySnapshot,
+        (e) =>
+            console.error(
+                'Realtime recipe listener error:',
+                e
+            )
+    )
+
+    window.addEventListener(
+        'keydown',
+        handleEscape
+    )
+})
+
+
+// Removes Firebase and keyboard listeners
+// when the component is destroyed.
+onUnmounted(() => {
+    unsubscribeRecipes?.()
+
+    window.removeEventListener(
+        'keydown',
+        handleEscape
+    )
 })
 </script>
 
-
 <style scoped>
-/* =================================
-   MAIN CONTAINER
-================================= */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap');
 
 .recipe-container {
+    --card: #fff;
+    --ink: #351219;
+    --soft: #806d72;
+    --burgundy: #741f2e;
+    --line: #eadfe0;
     width: 100%;
+    color: var(--ink);
+    font-family: Inter, sans-serif
 }
 
-
-/* =================================
-   FORM CARD
-================================= */
-
-.form-card {
-    margin: 0 0 36px;
-
-    border-radius: 20px;
-
-    background: #ffffff;
-
-    box-shadow:
-        0 8px 30px rgba(70, 18, 28, 0.08);
-
-    border: 1px solid #eee1e3;
-
-    overflow: hidden;
-}
-
-
-/* =================================
-   FORM HEADER
-================================= */
-
-.form-card ion-card-header {
-    padding: 24px 24px 12px;
-}
-
-.form-header {
+.collection-header {
     display: flex;
     align-items: center;
-    gap: 15px;
+    justify-content: space-between;
+    margin-bottom: 14px
 }
 
-.form-icon {
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
-
-    border-radius: 14px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    background: #f6e8eb;
-}
-
-.form-icon ion-icon {
-    font-size: 25px;
-    color: #751f2e;
-}
-
-.form-card ion-card-subtitle {
-    margin: 0 0 3px;
-
+.collection-label {
+    display: block;
+    margin-bottom: 4px;
+    color: #8b3442;
     font-size: 10px;
     font-weight: 800;
-
-    letter-spacing: 1.5px;
-
-    color: #963746;
+    letter-spacing: 1.5px
 }
 
-.form-card ion-card-title {
-    font-size: 22px;
-    font-weight: 800;
-
-    color: #351219;
+.collection-header h2 {
+    margin: 0;
+    color: var(--ink);
+    font-size: 24px;
+    font-weight: 800
 }
 
-
-/* =================================
-   FORM CONTENT
-================================= */
-
-.form-card ion-card-content {
-    padding: 12px 24px 26px;
+.add-button {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--burgundy);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 25px;
+    box-shadow: 0 6px 18px rgba(116, 31, 46, .25);
+    cursor: pointer;
+    position: relative;
+    z-index: 2
 }
 
-.form-field {
+.add-button ion-icon {
+    color: #fff;
+    font-size: 25px
+}
+
+.search-box {
+    height: 46px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0 13px;
     margin-bottom: 16px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fff
 }
 
-.form-field>label {
+.search-box ion-icon {
+    color: #927f84;
+    font-size: 18px
+}
+
+.search-box input {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    font-size: 13px
+}
+
+.search-box input::placeholder {
+    color: #a49499
+}
+
+.recipe-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px
+}
+
+.recipe-card {
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 15px;
+    background: var(--card);
+    box-shadow: 0 7px 22px rgba(70, 18, 28, .07);
+    cursor: pointer;
+    transition: .18s
+}
+
+.recipe-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(70, 18, 28, .11)
+}
+
+.recipe-image {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: #efe6e8
+}
+
+.recipe-image img,
+.detail-image img {
+    width: 100%;
+    height: 100%;
     display: block;
+    object-fit: cover
+}
 
-    margin: 0 0 7px 3px;
+.recipe-image-placeholder {
+    display: grid;
+    place-items: center;
+    color: #a56c78
+}
 
-    font-size: 13px;
-    font-weight: 700;
+.recipe-image-placeholder ion-icon {
+    font-size: 34px
+}
 
+.recipe-card-body {
+    padding: 12px
+}
+
+.card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 7px
+}
+
+.category-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 8px;
+    background: #f8e9ec;
+    color: var(--burgundy);
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: capitalize
+}
+
+.time-note {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    color: var(--soft);
+    font-size: 9px;
+    white-space: nowrap
+}
+
+.time-note ion-icon {
+    font-size: 12px
+}
+
+.recipe-card h3 {
+    margin: 10px 0 5px;
+    color: var(--ink);
+    font-family: Fraunces, serif;
+    font-size: 17px;
+    line-height: 1.12
+}
+
+.preview {
+    min-height: 30px;
+    margin: 0;
+    color: var(--soft);
+    font-size: 10px;
+    line-height: 1.5
+}
+
+.view-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 3px;
+    margin-top: 10px;
+    padding-top: 9px;
+    border-top: 1px solid #f0e8e9;
+    color: var(--burgundy);
+    font-size: 10px;
+    font-weight: 800
+}
+
+.view-row ion-icon {
+    font-size: 14px
+}
+
+.empty-state {
+    padding: 48px 20px;
+    text-align: center;
+    color: var(--soft)
+}
+
+.empty-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #f4e4e7;
+    color: var(--burgundy)
+}
+
+.empty-icon ion-icon {
+    font-size: 27px
+}
+
+.empty-state h3 {
+    margin: 0 0 6px;
+    color: var(--ink);
+    font-size: 17px
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 12px
+}
+
+.sheet-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(18, 15, 17, .58);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px)
+}
+
+.bottom-sheet {
+    width: min(760px, 100%);
+    max-height: min(88vh, 820px);
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding: 12px 20px calc(24px + env(safe-area-inset-bottom));
+    border-radius: 26px 26px 0 0;
+    background: #fff;
+    color: #351219;
+    box-shadow: 0 -12px 40px rgba(0, 0, 0, .18);
+    position: relative;
+    z-index: 100000
+}
+
+.sheet-handle {
+    width: 42px;
+    height: 5px;
+    margin: 0 auto 14px;
+    border-radius: 999px;
+    background: #cfc4c7
+}
+
+.sheet-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 18px
+}
+
+.sheet-eyebrow {
+    display: block;
+    margin-bottom: 3px;
+    color: #963746;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.5px
+}
+
+.sheet-header h2 {
+    margin: 0;
+    color: #351219;
+    font-family: Fraunces, serif;
+    font-size: 25px;
+    line-height: 1.1
+}
+
+.close-button {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 auto;
+    border: 0;
+    border-radius: 50%;
+    background: #f4e8ea;
+    color: var(--burgundy);
+    display: grid;
+    place-items: center;
+    font-size: 20px;
+    cursor: pointer
+}
+
+.close-button ion-icon {
+    color: var(--burgundy)
+}
+
+.recipe-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px
+}
+
+.upload-box,
+.image-preview {
+    position: relative;
+    width: 100%;
+    min-height: 155px;
+    overflow: hidden;
+    border-radius: 15px;
+    box-sizing: border-box
+}
+
+.upload-box {
+    border: 1.5px dashed #d8bfc4;
+    background: #fcf7f8;
+    color: var(--burgundy);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    cursor: pointer
+}
+
+.upload-box input {
+    display: none
+}
+
+.upload-box ion-icon {
+    font-size: 30px;
+    color: var(--burgundy)
+}
+
+.upload-box strong {
+    color: var(--burgundy);
+    font-size: 13px
+}
+
+.upload-box span {
+    color: var(--soft);
+    font-size: 10px
+}
+
+.image-preview img {
+    width: 100%;
+    height: 100%;
+    min-height: 155px;
+    display: block;
+    object-fit: cover
+}
+
+.remove-image {
+    position: absolute;
+    top: 9px;
+    right: 9px;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .94);
+    color: #b51f2e;
+    display: grid;
+    place-items: center;
+    cursor: pointer
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px
+}
+
+.form-field label {
+    display: block;
+    margin: 0 0 6px 3px;
     color: #4d252c;
+    font-size: 11px;
+    font-weight: 800
 }
 
 .form-field ion-item {
     --background: #faf7f7;
+    --color: #351219;
     --border-color: transparent;
-    --highlight-color: #761f2f;
-
-    --padding-start: 13px;
-    --inner-padding-end: 13px;
-
+    --padding-start: 11px;
+    --inner-padding-end: 10px;
+    --highlight-color-focused: #8a2a39;
+    min-height: 48px;
     border: 1px solid #eadcde;
-    border-radius: 12px;
-
-    min-height: 50px;
-
-    transition: 0.2s ease;
+    border-radius: 11px
 }
 
 .form-field ion-item:focus-within {
     border-color: #8a2a39;
-    background: #ffffff;
+    background: #fff
 }
 
 .form-field ion-icon {
     color: #8a2a39;
-
-    font-size: 19px;
-
-    margin-right: 8px;
+    font-size: 18px;
+    margin-right: 7px
 }
 
 .form-field ion-input,
 .form-field ion-textarea {
     --color: #351219;
-    --placeholder-color: #9c8589;
-
-    font-size: 14px;
-}
-
-
-/* =================================
-   BUTTONS
-================================= */
-
-.form-buttons {
-    margin-top: 24px;
-
-    display: flex;
-    gap: 10px;
-}
-
-.form-buttons ion-button {
-    --border-radius: 12px;
-
-    height: 48px;
-
-    margin: 0;
-}
-
-.primary-button {
-    --background: #741f2e;
-    --background-hover: #5e1825;
-    --background-activated: #5e1825;
-
-    --box-shadow:
-        0 6px 16px rgba(116, 31, 46, 0.22);
-
-    font-weight: 700;
-
-    flex: 1;
-}
-
-.cancel-button {
-    --color: #741f2e;
-    --border-color: #d5b8bd;
-
-    font-weight: 700;
-}
-
-
-/* =================================
-   COLLECTION HEADER
-================================= */
-
-.collection-header {
-    display: flex;
-
-    align-items: center;
-    justify-content: space-between;
-
-    margin-bottom: 18px;
-}
-
-.collection-label {
-    display: block;
-
-    margin-bottom: 3px;
-
-    font-size: 10px;
-    font-weight: 800;
-
-    letter-spacing: 1.5px;
-
-    color: #963746;
-}
-
-.collection-header h2 {
-    margin: 0;
-
-    font-size: 25px;
-    font-weight: 800;
-
+    --placeholder-color: #9b8b90;
+    --placeholder-opacity: 1;
     color: #351219;
+    font-size: 13px
 }
 
-.recipe-count {
-    padding: 7px 12px;
-
-    border-radius: 20px;
-
-    background: #f3e4e7;
-
-    color: #741f2e;
-
-    font-size: 12px;
-    font-weight: 700;
-}
-
-
-/* =================================
-   RECIPE GRID
-================================= */
-
-.recipe-grid {
-    display: grid;
-
-    grid-template-columns:
-        repeat(2, minmax(0, 1fr));
-
-    gap: 20px;
-}
-
-
-/* =================================
-   RECIPE CARD
-================================= */
-
-.recipe-card {
-    margin: 0;
-
-    border-radius: 18px;
-
-    background: #ffffff;
-
-    border: 1px solid #eee1e3;
-
-    box-shadow:
-        0 6px 22px rgba(70, 18, 28, 0.07);
-
-    overflow: hidden;
-
-    transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
-}
-
-.recipe-card:hover {
-    transform: translateY(-3px);
-
-    box-shadow:
-        0 12px 30px rgba(70, 18, 28, 0.12);
-}
-
-
-/* =================================
-   CARD TOP
-================================= */
-
-.recipe-card-top {
-    display: flex;
-
-    justify-content: space-between;
-    align-items: center;
-
-    padding: 18px 18px 0;
-}
-
-.category-badge {
-    display: inline-flex;
-
-    align-items: center;
-
-    padding: 6px 10px;
-
-    border-radius: 20px;
-
-    background: #f6e7ea;
-
-    color: #741f2e;
-
-    font-size: 11px;
-    font-weight: 800;
-
-    text-transform: uppercase;
-
-    letter-spacing: 0.4px;
-}
-
-.time-badge {
-    display: flex;
-
-    align-items: center;
-
-    gap: 4px;
-
-    font-size: 11px;
-    font-weight: 700;
-
-    color: #80656a;
-}
-
-.time-badge ion-icon {
-    font-size: 15px;
-
-    color: #8b3442;
-}
-
-
-/* =================================
-   RECIPE HEADER
-================================= */
-
-.recipe-header {
-    padding: 15px 18px 10px;
-}
-
-.recipe-header ion-card-title {
-    font-size: 22px;
-
-    line-height: 1.2;
-
-    font-weight: 800;
-
+.form-field ion-input::part(native),
+.form-field ion-textarea::part(native) {
     color: #351219;
+    caret-color: #741f2e
 }
 
-
-/* =================================
-   RECIPE CONTENT
-================================= */
-
-.recipe-card ion-card-content {
-    padding: 8px 18px 18px;
-}
-
-.recipe-section {
-    margin-bottom: 18px;
-}
-
-.recipe-section-title {
-    display: flex;
-
-    align-items: center;
-
-    gap: 7px;
-
-    margin-bottom: 7px;
-
-    font-size: 12px;
-
-    font-weight: 800;
-
-    color: #741f2e;
-
-    text-transform: uppercase;
-
-    letter-spacing: 0.5px;
-}
-
-.recipe-section-title ion-icon {
-    font-size: 16px;
-}
-
-.recipe-section p {
+.form-error {
     margin: 0;
-
-    color: #6c5b5f;
-
-    font-size: 13px;
-
-    line-height: 1.6;
-
-    white-space: pre-line;
-
-    display: -webkit-box;
-    line-clamp: 5;
-    -webkit-line-clamp: 5;
-    -webkit-box-orient: vertical;
-
-    overflow: hidden;
+    padding: 9px 11px;
+    border-radius: 9px;
+    background: #fff0f1;
+    color: #a61d2e;
+    font-size: 11px
 }
 
-
-/* =================================
-   ACTION BUTTONS
-================================= */
-
-.recipe-actions {
-    display: flex;
-
-    gap: 9px;
-
-    padding-top: 4px;
-
-    border-top: 1px solid #f0e6e8;
-}
-
-.recipe-actions ion-button {
-    flex: 1;
-
-    height: 42px;
-
-    margin: 13px 0 0;
-
-    --border-radius: 10px;
-
+.save-button,
+.edit-action,
+.delete-action,
+.cancel-action {
+    min-height: 46px;
+    border: 0;
+    border-radius: 11px;
+    font: inherit;
     font-size: 12px;
-
-    font-weight: 700;
+    font-weight: 800;
+    cursor: pointer
 }
 
-.edit-button {
-    --color: #741f2e;
-    --border-color: #cfaeb4;
-}
-
-.delete-button {
-    --color: #a33a48;
-    --border-color: #e0bfc4;
-}
-
-
-/* =================================
-   EMPTY STATE
-================================= */
-
-.empty-state {
-    padding: 55px 25px;
-
-    text-align: center;
-
-    background: #ffffff;
-
-    border: 1px dashed #d8bdc1;
-
-    border-radius: 18px;
-}
-
-.empty-icon {
-    width: 65px;
-    height: 65px;
-
-    margin: 0 auto 15px;
-
+.save-button {
     display: flex;
-
     align-items: center;
     justify-content: center;
-
-    border-radius: 18px;
-
-    background: #f6e7ea;
+    gap: 7px;
+    background: #23845f;
+    color: #fff
 }
 
-.empty-icon ion-icon {
-    font-size: 30px;
-
-    color: #7a2332;
+.save-button ion-icon {
+    color: #fff
 }
 
-.empty-state h3 {
-    margin: 0 0 7px;
-
-    font-size: 19px;
-
-    font-weight: 800;
-
-    color: #351219;
+.save-button:disabled,
+.delete-action:disabled {
+    opacity: .6;
+    cursor: wait
 }
 
-.empty-state p {
-    max-width: 390px;
-
-    margin: 0 auto;
-
-    font-size: 13px;
-
-    line-height: 1.6;
-
-    color: #806d72;
+.detail-image {
+    overflow: hidden;
+    margin: 0 -20px 16px;
+    max-height: 290px;
+    aspect-ratio: 16/8;
+    background: #f2e7e9
 }
 
+.detail-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+    color: var(--soft);
+    font-size: 11px
+}
 
-/* =================================
-   RESPONSIVE
-================================= */
+.detail-meta>span:last-child {
+    display: flex;
+    align-items: center;
+    gap: 4px
+}
 
-@media (max-width: 760px) {
+.detail-section {
+    padding: 15px 0;
+    border-top: 1px solid #eee4e6
+}
 
+.detail-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0 0 9px;
+    color: var(--ink);
+    font-size: 14px
+}
+
+.detail-section h3 ion-icon {
+    color: var(--burgundy)
+}
+
+.detail-section p {
+    margin: 0;
+    color: #6d5e63;
+    font-size: 12px;
+    line-height: 1.7
+}
+
+.multiline {
+    white-space: pre-line
+}
+
+.owner-note {
+    margin: 4px 0 14px;
+    color: #907e84;
+    font-size: 10px;
+    text-align: center
+}
+
+.detail-actions,
+.confirm-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px
+}
+
+.edit-action,
+.delete-action,
+.cancel-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px
+}
+
+.edit-action {
+    background: #f3f6f7;
+    color: #3f5962
+}
+
+.delete-action {
+    background: #e92d3c;
+    color: #fff
+}
+
+.cancel-action {
+    background: #f0ebec;
+    color: #654e54
+}
+
+.delete-icon {
+    width: 58px;
+    height: 58px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    background: #ffe9eb;
+    color: #e92d3c;
+    display: grid;
+    place-items: center;
+    font-size: 28px
+}
+
+.confirm-content {
+    padding: 25px 8px 12px;
+    text-align: center
+}
+
+.confirm-content h2 {
+    margin: 0 0 8px;
+    color: var(--ink);
+    font-family: Fraunces, serif;
+    font-size: 24px
+}
+
+.confirm-content p {
+    margin: 0 auto 22px;
+    max-width: 330px;
+    color: var(--soft);
+    font-size: 12px;
+    line-height: 1.6
+}
+
+.sheet-fade-enter-active,
+.sheet-fade-leave-active {
+    transition: opacity .2s
+}
+
+.sheet-fade-enter-from,
+.sheet-fade-leave-to {
+    opacity: 0
+}
+
+@media(max-width:600px) {
     .recipe-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr
     }
 
-}
-
-
-@media (max-width: 520px) {
-
-    .form-card ion-card-header {
-        padding: 20px 17px 10px;
+    .form-row {
+        grid-template-columns: 1fr
     }
 
-    .form-card ion-card-content {
-        padding: 10px 17px 20px;
+    .bottom-sheet {
+        width: 100%;
+        max-height: 91vh;
+        padding-left: 14px;
+        padding-right: 14px
     }
 
-    .form-buttons {
-        flex-direction: column;
+    .detail-image {
+        margin-left: -14px;
+        margin-right: -14px
     }
 
-    .collection-header h2 {
-        font-size: 22px;
+    .sheet-header h2 {
+        font-size: 22px
     }
-
-    .recipe-card-top {
-        padding: 15px 15px 0;
-    }
-
-    .recipe-header {
-        padding: 13px 15px 8px;
-    }
-
-    .recipe-card ion-card-content {
-        padding: 8px 15px 16px;
-    }
-
 }
 </style>
