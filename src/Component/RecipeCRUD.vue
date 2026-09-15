@@ -153,7 +153,9 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { IonIcon, IonInput, IonItem, IonTextarea } from '@ionic/vue'
 import { addOutline, cameraOutline, chevronForwardOutline, closeOutline, createOutline, documentTextOutline, gridOutline, listOutline, restaurantOutline, saveOutline, searchOutline, timeOutline, trashOutline } from 'ionicons/icons'
+//// Import Firebase Realtime Database functions.
 import { get, onValue, push, ref as firebaseRef, remove, set, update } from 'firebase/database'
+// Import the Firebase database configuration.
 import { database } from '../firebase'
 
 // Defines the structure of a recipe and the data it can contain.
@@ -227,20 +229,29 @@ const getOwnerId = () => {
 const currentOwnerId = getOwnerId()
 
 
-// Filters the recipe list based on the user's search query.
+
 const filteredRecipes = computed(() => {
     const q = searchQuery.value.trim().toLowerCase()
 
+    // MY COLLECTION:
+    // Only show recipes created by the current user.
+    const myRecipes = recipes.value.filter(
+        (recipe) => recipe.createdBy === currentOwnerId
+    )
+
+    // Search only within the current user's recipes.
     if (!q) {
-        return recipes.value
+        return myRecipes
     }
 
-    return recipes.value.filter(
-        (x) =>
-            x.recipeName.toLowerCase().includes(q) ||
-            x.category.toLowerCase().includes(q)
+    return myRecipes.filter(
+        (recipe) =>
+            recipe.recipeName.toLowerCase().includes(q) ||
+            recipe.category.toLowerCase().includes(q)
     )
 })
+
+
 
 
 // Converts raw Firebase recipe data into the format
